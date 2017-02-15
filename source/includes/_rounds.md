@@ -24,6 +24,7 @@ What if a different User wanted to moderate their Sweepstakes entries before ent
 As you can see, these use cases become easy to model when you think of each Game as a Flow of Rounds.
 
 **Flow** is described in-depth in the [next section](#flow). First, we must define our **Rounds**.
+### Are we removing Flow?
 
 
 ## Action and Timed Rounds

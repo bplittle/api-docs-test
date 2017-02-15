@@ -30,6 +30,7 @@ When a Participant is created, they are automatically issued a token with `api_b
 Extended permissions (`administrate`, `moderate`, `judge`) can be granted to a Participant by a User or a Participant with the `administrate` permission.
 See [Participant Permissions](#participant-permissions) to learn more.
 
+-### Check this - is logging true?
 Be sure to auth requests using the Participant's token instead of the User Public token whenever possible.
 The details and caller of every API call is logged in our database, and that data will be much more rich if a Participant ID is associated with each possible record. See [Export API Calls](#export-api-calls) to learn more.
 

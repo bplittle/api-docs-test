@@ -99,7 +99,8 @@ Any client-side action should use either a Participant token or the User&rsquo;s
 <p>Extended permissions (<code class="prettyprint">administrate</code>, <code class="prettyprint">moderate</code>, <code class="prettyprint">judge</code>) can be granted to a Participant by a User or a Participant with the <code class="prettyprint">administrate</code> permission.
 See <a href="#participant-permissions">Participant Permissions</a> to learn more.</p>
 
-<p>Be sure to auth requests using the Participant&rsquo;s token instead of the User Public token whenever possible.
+<p>-### Check this - is logging true?
+Be sure to auth requests using the Participant&rsquo;s token instead of the User Public token whenever possible.
 The details and caller of every API call is logged in our database, and that data will be much more rich if a Participant ID is associated with each possible record. See <a href="#export-api-calls">Export API Calls</a> to learn more.</p>
 
 <p>By default, Participant tokens expire after 24 hours. See <a href="#renew-participant-token">Renew Participant Token</a> to learn more.</p>
@@ -131,6 +132,8 @@ Replace <code class="prettyprint">mystruttatoken</code> with your User or Partic
           <h1 id="paging">Paging</h1>
 
 <h2 id="cursoring">Cursoring</h2>
+
+<h3 id="check-this-section---do-we-using-cursoring?">Check this section - DO we using cursoring?</h3>
 
 <p>The List endpoints in this API borrow their pagination method - <strong>Cursoring</strong> - from the <a href="https://dev.twitter.com/rest/public/search">Twitter Search API</a>.
 Cursoring was developed to overcome the inefficiencies associated with passing offsets to a database, particularly when dealing with a high volume of new content being added consistently. Twitter probably understands this problem better than any other organization, and since Strutta games can have huge spikes of new content at any given time, we decided to adopt their solution.</p>
@@ -199,7 +202,7 @@ Cursoring was developed to overcome the inefficiencies associated with passing o
 <tr>
 <td><code class="prettyprint">count</code></td>
 <td>The maximum number of objects to return</td>
-<td>Dependant on Object requested</td>
+<td>Dependent on Object requested</td>
 </tr>
 <tr>
 <td><code class="prettyprint">max_id</code></td>
@@ -810,6 +813,8 @@ What if a User wanted to run a photo contest where instead of a Judging the ulti
 <p>As you can see, these use cases become easy to model when you think of each Game as a Flow of Rounds.</p>
 
 <p><strong>Flow</strong> is described in-depth in the <a href="#flow">next section</a>. First, we must define our <strong>Rounds</strong>.</p>
+
+<h3 id="are-we-removing-flow?">Are we removing Flow?</h3>
 
 <h2 id="action-and-timed-rounds">Action and Timed Rounds</h2>
 

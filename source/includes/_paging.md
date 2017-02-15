@@ -1,6 +1,7 @@
 # Paging
 
 ## Cursoring
+### Check this section - DO we using cursoring?
 
 The List endpoints in this API borrow their pagination method - **Cursoring** - from the [Twitter Search API](https://dev.twitter.com/rest/public/search).
 Cursoring was developed to overcome the inefficiencies associated with passing offsets to a database, particularly when dealing with a high volume of new content being added consistently. Twitter probably understands this problem better than any other organization, and since Strutta games can have huge spikes of new content at any given time, we decided to adopt their solution.
@@ -62,7 +63,7 @@ All List requests are controlled by three parameters. They can be used together 
 
 Parameter | Description | Default
 --------- | ----------- | -------
-`count` | The maximum number of objects to return | Dependant on Object requested
+`count` | The maximum number of objects to return | Dependent on Object requested
 `max_id` | Return Entries created before and including the Entry with this `id` | nil
 `since_id` | Return Entries created after the Entry with this `id` | nil
 
