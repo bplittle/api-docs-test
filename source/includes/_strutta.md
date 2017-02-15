@@ -1,5 +1,8 @@
 # Strutta API
 
+
+### docs v2 :fire emojis:
+
 ## Background
 
 The Strutta API allows you to tap into the core of Strutta's promotions platform and take advantage of advanced complexity and customization.
