@@ -1,11 +1,6 @@
 # Strutta API
 
-
-### docs v2 :fire emojis:
-
 ## Background
-
-### More changes??
 
 The Strutta API allows you to tap into the core of Strutta's promotions platform and take advantage of advanced complexity and customization.
 
@@ -23,8 +18,6 @@ We use HTTP verbs and standard HTTP response codes, and object hierarchy is (wit
 This API is designed so that it can easily and securely be implemented on both the client and the server.
 JSON is returned in all API responses, including errors, which have a standardized structure.
 We do our best to provide specific, in-depth error messages to save you headaches.
-
-We also keep a record of all authenticated API calls (those that result in responses other than 401 or 404) that get made, so you can easily view your own usage history and the history of those you grant permission to.
 
 Throughout the many parameter lists in this documentation, only parameters marked as optional are not required.
 

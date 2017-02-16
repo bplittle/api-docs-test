@@ -1,5 +1,6 @@
 # Entries
 
+
 **Entries** are *stateful*, which means that they belong to different Rounds as the Game progresses.
 For example, an Entry is part of a Moderation Round until Moderation is completed,
 when is is moved to the Moderation Round's `pass_round` or `fail_round`.
@@ -35,10 +36,10 @@ entry = {
     title: 'My House',
     description: 'This is a picture of my house'
   },
-  media: {
+  media: [{
     link: 'http://placehold.it/350x150',
     type: 'image'
-  }
+  }]
 }
 strutta.games(333).entries.create(entry)
 ```
@@ -96,6 +97,7 @@ strutta.games(333).entries.create(entry)
 Entries must be created by Participants - or on behalf of existing Participants -
 when the Game has 1 or more active Submission rounds.
 
+
 ### HTTP Request
 
 `POST /v2/games/:id/entries`
@@ -121,6 +123,24 @@ Consumer | Permission | Notes
 User | `private_token`
 Participant | `api_basic`
 Participant | `administrate` | If creating an Entry on behalf of another Participant
+
+## Create a Participant and Entry
+
+`POST v2/games/:id/enter`
+
+This is the consolidated endpoint for creating an entry without first needing to create a participant.
+
+### Parameters
+
+Parameter | Description
+--------- | -----------
+`token` | the API key, required
+`email` | An email used to identify the participant. Required, unless an identifier is passed
+`identifier` | An alphanumeric string used to identify the participant. Required, unless an email is passed
+`metatdata` | Optional json to include with the entry
+
+The API will only accept an email or identifier, not both. In the case that the participant has reached the submission limit, the API will return the status of 422 unprocessable entity as well as the last valid entry from the participant.
+
 
 ## Get All Entries
 
@@ -451,13 +471,6 @@ Name | Type | Description
 `round_id` | int | The ID of the Points Round
 `top_rank` | int | The highest rank desired. Ie. for the top 10, choose `1` (optional - defaults to 1)
 `limit` | int | 1-20 (optional - defaults to 20)
-
-### Paging
-
-Paging in Leaderboard is similar to [paging in List endpoints](#paging).
-Just swap `next_top_rank` for `next_max_id`.
-Beware that ranks can change very quickly, so there is no completely reliable way to page through a Leaderboard.
-It is recommended to use the [Export API](#export-api) if you ever need a full export of Points.
 
 ### Minimum Permission
 

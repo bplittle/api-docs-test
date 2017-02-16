@@ -25,14 +25,10 @@ When a Participant is created, they are automatically issued a token with `api_b
 
 `api_basic` provides the Participant with general READ permissions.
 
-`registered` scopes ownership of the Participant object to the Participant themselves, allowing the creator to update their metadata and to create/update their own Entries and Points. Think "my body's nobody's body but mine."
+`registered` scopes ownership of the Participant object to the Participant themselves, allowing the creator to update their metadata and to create/update their own Entries and Points.
 
 Extended permissions (`administrate`, `moderate`, `judge`) can be granted to a Participant by a User or a Participant with the `administrate` permission.
 See [Participant Permissions](#participant-permissions) to learn more.
-
--### Check this - is logging true?
-Be sure to auth requests using the Participant's token instead of the User Public token whenever possible.
-The details and caller of every API call is logged in our database, and that data will be much more rich if a Participant ID is associated with each possible record. See [Export API Calls](#export-api-calls) to learn more.
 
 By default, Participant tokens expire after 24 hours. See [Renew Participant Token](#renew-participant-token) to learn more.
 

@@ -24,7 +24,6 @@ What if a different User wanted to moderate their Sweepstakes entries before ent
 As you can see, these use cases become easy to model when you think of each Game as a Flow of Rounds.
 
 **Flow** is described in-depth in the [next section](#flow). First, we must define our **Rounds**.
-### Are we removing Flow?
 
 
 ## Action and Timed Rounds
@@ -37,16 +36,16 @@ Action Rounds advance Entries to subsequent rounds when an action takes place.
 
 Moderation is a good example: when an administrator approves or denies an Entry it is moved to the Round's `pass_round` or `fail_round` immediately.
 
-There are two Rounds of this type: `submission` and `moderation`.
+There are two Rounds of this type: `submission` and `on_demand`.
 
 ### Timed Rounds
 
-Timed Rounds automatically advance their entries at a pre-defined timestamp.
+There are four Rounds of this type: `random_draw`, `points`, `judging`, and `webhook`.
+Timed rounds, by default, will automatically advance their entries at their `end_date`.
 
-Random Draw is a good example: Once the Round has ended, a pre-defined number of Entries "win" and advance to the Round's `pass_round` at that time. Those that "lose" are advanced to the Round's `fail_round`.
+Judging is a good example: Once the Round has ended, based on submitted judgements during the round a number of entries will advance to the Round's `pass_round`. Those that "lose" are advanced to the Round's `fail_round`.
 
-There are four Rounds of this type: `random_draw`, `points`, `judging`, and `webhook`
-
+Timed rounds are affected by the `manually_advance` boolean parameter. If `manually_advance` is set to false, they will not advance unless triggered to do so.
 
 ## Global Attributes
 
@@ -60,6 +59,7 @@ Name | Type | Description
 `title` | string | The Round's title
 `start_date` | UNIX timestamp | The Round's start date
 `end_date` | UNIX timestamp | The Round's end date
+`manually_advance` | boolean | Whether a timed round automatically advanced at its `end_date` or requires a manual trigger
 
 ## Round Types and their Rules
 
@@ -70,7 +70,7 @@ String identifier: `submission`
 If a Game had a front door, it would be a Submission Round.
 Rounds of this type define the rules for how often and how frequently a Participant can play a Game.
 
-### Submission Rules
+#### Submission Rules
 
 Name | Type | Description | Options
 ---- | ---- | ----------- | -------
@@ -78,33 +78,37 @@ interval | string | Time period during which `num_entries` and `num_referrals` a
 num_entries | int | Total number of Entries a Participant is allowed during `interval`
 num_referrals | int | Total number of extra Entries a Participant is allowed during `interval` (optional)
 
+
 ### Moderation
 
 String identifier: `moderation`
 
 Moderation Rounds are used to quickly eliminate any inappropriate or off-topic content.
-They can be used between two Rounds of any type, and are very useful for monitoring the overall progress of a Game.
+They can be used between two Rounds of any type.
 
-If there are Entries awaiting moderation, this Round POSTs status reports to the `status_webhook` a maximum of two times per day.
-If you do not wish to receive these reports, do not provide a `status_webhook`.
+The `manually_advance` parameter is particularly important for Moderation Rounds.
 
-Make sure to give a realistic buffer period for Moderation.
-If the Round ends and there are still Entries in Moderation, they will be advanced to the `fail_round` defined in the Game Flow.
+`manually_advance` | Effect at Moderation Round's `end_date`
+------------ | ------------
+`false` or `nil` (default) | Any Entries currently in the Moderation Round will advance to its `fail_round`
+`true` | Any Entries currently in the Moderation Round will remain in the Moderation Round
 
 Moderation is performed by Participants with the `moderate` permission. Visit [Moderation](#get-entries-in-moderation) to learn more.
 
-### Moderation Rules
+#### Moderation Rules
 
 Name | Type | Description
 ---- | ---- | -----------
-status_webhook | string | POST status reports to this URL - ie. *Entries awaiting moderation* (optional)
+
+_This Round Type has no rules_
+
 
 ### Points
 
 String identifier: `points`
 
 There are many manifestations of Points across the internet.
-Examples include: "Votes", "Likes", "Re-Tweets", "Subscribes", "Diggs", and many more.
+Examples include: "Votes", "Likes", "Re-Tweets", "Subscribes", and many more.
 
 At the end of the day, each of the above is just a way of keeping score.
 To further our generalized *Game* analogy, we opted to use *Points* as our descriptor.
@@ -112,7 +116,7 @@ To further our generalized *Game* analogy, we opted to use *Points* as our descr
 Points Rounds define the number of Points (postive or negative) a Participant can assign per Entry during a pre-defined interval.
 When the interval is completed, Entries are sorted by Points, and a pre-defined number "win".
 
-### Points Rules
+#### Points Rules
 
 Name | Type | Description | Options
 ---- | ---- | ----------- | -------
@@ -134,7 +138,7 @@ This results in `winners` also being limited to 20. If you require a larger pool
 
 Visit [Judging](#judging) to learn more.
 
-### Judging Rules
+#### Judging Rules
 
 Name | Type | Description
 ---- | ---- | -----------
@@ -148,7 +152,7 @@ String identifier: `random_draw`
 Random Draw Rounds are the bread and butter of Sweepstakes Games, but can really be used Games of any kind.
 Rounds of this type can define either an absolute number of winners or a percentage of total Entries that will "win" the Round.
 
-### Random Draw Rules
+#### Random Draw Rules
 
 Name | Type | Description
 ---- | ---- | -----------
@@ -159,46 +163,43 @@ percentage | boolean | Whether to interpret `winners` as a percentage. Default: 
 
 String identifier: `on_demand`
 
-The On-Demand Winners endpoint behaves as a mini-game _within_ your Game.
+The On-Demand Winners endpoint behaves as a mini-game *within* your Game.
 A pre-defined number of entries are randomly drawn from all entries that have an active (non-nil) state.
 These winners are then passed through the provided On-Demand Round and returned.
 
-### On Demand Rules
+Visit [On Demand Winners](#on-demand-winners) for more information.
+
+#### On Demand Rules
 
 Name | Type | Description
 ---- | ---- | -----------
 
 _This Round Type has no rules_
 
+### Instant Win
+
+String identifier `instant_win`
+
+Instant Win Rounds will immediately advance an Entry to its `pass_round` or `fail_round` based on odds provided in its rules.
+
+#### Instant Win Rules
+
+Name | Type | Description
+---- | ----- | -------
+`max_winners` | int | Max number of winners that can go to pass_round
+`max_entries` | int |  Max number of times a participant can enter. If entry number > max_entries number, entry is pushed to fail_round
+`odds` | int | Chance of winning, 1 in (odds).
+
+
 ### Webhook
 
 String identifier: `webhook`
 
-Webhook Rounds were originally named Prize Fulfillment Rounds, but were later generalized so that they might be used for passing Entries, failing Entries, or even things like mid-Game progress reports.
-When a Webhook Round reaches its end date, it POSTs the data of all its Entries to a pre-defined webhook and advances the Entries to the next Round.
+"Webhook" rounds have undergone a number of transformations as we have come to understand our users' needs.
+At this point in time they essentially act as "holding" rounds.
 
-If a webhook POST is unsuccessful (anything other than a 200 response), it can be retried or dismissed at our [developer portal](http://api.strutta.com).
-
-### Webhook Rules
-
-Name | Type | Description
----- | ---- | -----------
-webhook | string | URI to POST to on Round completion
-notify_user | boolean | Whether to email User on Round completion. Default: `false`.
-
-## Referrals
-
-You may want to run a Sweepstakes in which Participants get bonus Entries for referring others to the Game.
-To allow this, we have implemented Referrals.
-
-To include this feature in your Game, there are two requirements.
-
-First, when creating a Submission Round, you must include a `num_referrals` parameter in the Round definition with a value of how many extra Entries you want to allow Participants during the given interval.
-
-When you create a Participant, if you have `administrate` permissions, a `referral_code` will be returned with that Participant.
-Then, to tell the API that an Entry is a referral of that Participant, you must include this code in the `referral` parameter of the Entry.
-If the number of that Participant's bonus Entries do not exceed the `num_referrals` value of the Round, this will automatically create a bonus Entry for the Participant.
-The bonus Entry's `metadata` value will be `{email: participant_email, referral: true}`, where `participant_email` is the original Participant's email address.
+By default, at a "Webhook" Round's `end_date`, all entries will advance to the Round's `pass_round`.
+However, if you turn on the `manually_advance` parameter to `true`, they will remain in the round even after the `end_date`.
 
 ## Create a Round
 
@@ -288,6 +289,7 @@ Parameter | Type | Description
 `start_date` | UNIX timestamp | The Round's start date
 `end_date` | UNIX timestamp | The Round's end date
 `rules` | Type-specific rules. See [Round Types and their Rules](#round-types-and-their-rules).
+`manually_advance` | boolean | 	Whether a timed round automatically advanced at its end_date or requires a manual trigger
 
 ### Minimum Permission
 
