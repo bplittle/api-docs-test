@@ -37,11 +37,7 @@
         
           <h1 id="strutta-api">Strutta API</h1>
 
-<h3 id="docs-v2-:fire-emojis:">docs v2 :fire emojis:</h3>
-
 <h2 id="background">Background</h2>
-
-<h3 id="more-changes??">More changes??</h3>
 
 <p>The Strutta API allows you to tap into the core of Strutta&rsquo;s promotions platform and take advantage of advanced complexity and customization.</p>
 
@@ -59,8 +55,6 @@ We use HTTP verbs and standard HTTP response codes, and object hierarchy is (wit
 <p>This API is designed so that it can easily and securely be implemented on both the client and the server.
 JSON is returned in all API responses, including errors, which have a standardized structure.
 We do our best to provide specific, in-depth error messages to save you headaches.</p>
-
-<p>We also keep a record of all authenticated API calls (those that result in responses other than 401 or 404) that get made, so you can easily view your own usage history and the history of those you grant permission to.</p>
 
 <p>Throughout the many parameter lists in this documentation, only parameters marked as optional are not required.</p>
 
@@ -94,14 +88,10 @@ Any client-side action should use either a Participant token or the User&rsquo;s
 
 <p><code class="prettyprint">api_basic</code> provides the Participant with general READ permissions.</p>
 
-<p><code class="prettyprint">registered</code> scopes ownership of the Participant object to the Participant themselves, allowing the creator to update their metadata and to create/update their own Entries and Points. Think &ldquo;my body&rsquo;s nobody&rsquo;s body but mine.&rdquo;</p>
+<p><code class="prettyprint">registered</code> scopes ownership of the Participant object to the Participant themselves, allowing the creator to update their metadata and to create/update their own Entries and Points.</p>
 
 <p>Extended permissions (<code class="prettyprint">administrate</code>, <code class="prettyprint">moderate</code>, <code class="prettyprint">judge</code>) can be granted to a Participant by a User or a Participant with the <code class="prettyprint">administrate</code> permission.
 See <a href="#participant-permissions">Participant Permissions</a> to learn more.</p>
-
-<p>-### Check this - is logging true?
-Be sure to auth requests using the Participant&rsquo;s token instead of the User Public token whenever possible.
-The details and caller of every API call is logged in our database, and that data will be much more rich if a Participant ID is associated with each possible record. See <a href="#export-api-calls">Export API Calls</a> to learn more.</p>
 
 <p>By default, Participant tokens expire after 24 hours. See <a href="#renew-participant-token">Renew Participant Token</a> to learn more.</p>
 
@@ -131,18 +121,9 @@ Replace <code class="prettyprint">mystruttatoken</code> with your User or Partic
 
           <h1 id="paging">Paging</h1>
 
-<h2 id="cursoring">Cursoring</h2>
+<h2 id="objects-that-offer-paging">Objects that Offer Paging</h2>
 
-<h3 id="check-this-section---do-we-using-cursoring?">Check this section - DO we using cursoring?</h3>
-
-<p>The List endpoints in this API borrow their pagination method - <strong>Cursoring</strong> - from the <a href="https://dev.twitter.com/rest/public/search">Twitter Search API</a>.
-Cursoring was developed to overcome the inefficiencies associated with passing offsets to a database, particularly when dealing with a high volume of new content being added consistently. Twitter probably understands this problem better than any other organization, and since Strutta games can have huge spikes of new content at any given time, we decided to adopt their solution.</p>
-
-<p>Read their well-worded and illustrated post about working with timelines <a href="https://dev.twitter.com/rest/public/timelines">here</a>.</p>
-
-<p><aside class="notice">
-<strong>List endpoints</strong> are those that request multiple objects at once
-</aside></p>
+<p>We offer the option to page through your records of Games, Entries, Participants, and Tags.</p>
 
 <h2 id="parameters-&amp;-usage">Parameters &amp; Usage</h2>
 
@@ -153,41 +134,78 @@ Cursoring was developed to overcome the inefficiencies associated with passing o
 <span class="n">strutta</span> <span class="o">=</span> <span class="no">Strutta</span><span class="o">::</span><span class="no">API</span><span class="p">.</span><span class="nf">new</span> <span class="s1">'mystruttatoken'</span>
 <span class="n">my_game</span> <span class="o">=</span> <span class="n">strutta</span><span class="p">.</span><span class="nf">games</span><span class="p">(</span><span class="mi">333</span><span class="p">)</span>
 
-<span class="c1"># First request - only pass 'count'</span>
-<span class="n">entries</span> <span class="o">=</span> <span class="n">my_game</span><span class="p">.</span><span class="nf">entries</span><span class="p">.</span><span class="nf">all</span><span class="p">(</span><span class="ss">count: </span><span class="mi">10</span><span class="p">)</span>
+<span class="c1">#page by 10 at a time</span>
+<span class="n">limit</span> <span class="o">=</span> <span class="mi">10</span>
 
-<span class="c1"># Record the paging hash's max_id for future use</span>
-<span class="c1"># (The more likely use case would be to store this in a database)</span>
-<span class="n">original_max_id</span> <span class="o">=</span> <span class="n">entries</span><span class="p">[</span><span class="s1">'paging'</span><span class="p">][</span><span class="s1">'max_id'</span><span class="p">]</span>
+<span class="c1"># First request - only pass 'limit'</span>
+<span class="n">entries</span> <span class="o">=</span> <span class="n">my_game</span><span class="p">.</span><span class="nf">entries</span><span class="p">.</span><span class="nf">all</span><span class="p">(</span><span class="ss">limit: </span><span class="n">limit</span><span class="p">)</span>
 
 <span class="c1"># Get next 3 pages</span>
+<span class="n">page</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="mi">3</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span>
   <span class="n">paging_params</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="ss">count: </span><span class="mi">10</span><span class="p">,</span>
-    <span class="ss">max_id: </span><span class="n">entries</span><span class="p">[</span><span class="s1">'paging'</span><span class="p">][</span><span class="s1">'next_max_id'</span><span class="p">]</span>
+    <span class="ss">limit: </span><span class="n">limit</span><span class="p">,</span>
+    <span class="ss">offset: </span><span class="n">limit</span> <span class="o">*</span> <span class="n">page</span>
   <span class="p">}</span>
-  <span class="n">entries</span> <span class="o">=</span> <span class="n">my_game</span><span class="p">.</span><span class="nf">entries</span><span class="p">.</span><span class="nf">all</span><span class="p">(</span><span class="n">paging_params</span><span class="p">)</span>
+  <span class="n">new_entries</span> <span class="o">=</span> <span class="n">my_game</span><span class="p">.</span><span class="nf">entries</span><span class="p">.</span><span class="nf">all</span><span class="p">(</span><span class="n">paging_params</span><span class="p">)</span>
+  <span class="n">page</span> <span class="o">+=</span> <span class="mi">1</span>
   <span class="c1"># Process entries...</span>
 <span class="k">end</span>
-
-<span class="c1"># Check for any Entries added since first request</span>
-<span class="n">paging_params</span> <span class="o">=</span> <span class="p">{</span>
-  <span class="ss">count: </span><span class="mi">10</span><span class="p">,</span>
-  <span class="ss">since_id: </span><span class="n">original_max_id</span>
-<span class="p">}</span>
-<span class="n">entries</span> <span class="o">=</span> <span class="n">my_game</span><span class="p">.</span><span class="nf">entries</span><span class="p">.</span><span class="nf">all</span><span class="p">(</span><span class="n">paging_params</span><span class="p">)</span>
-
-<span class="c1"># If necessary, get remaining pages of new content</span>
-<span class="k">begin</span>
-  <span class="n">paging_params</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="ss">count: </span><span class="mi">10</span><span class="p">,</span>
-    <span class="ss">since_id: </span><span class="n">original_max_id</span>
-    <span class="ss">max_id: </span><span class="n">entries</span><span class="p">[</span><span class="s1">'paging'</span><span class="p">][</span><span class="s1">'next_max_id'</span><span class="p">]</span>
-  <span class="p">}</span>
-  <span class="n">entries</span> <span class="o">=</span> <span class="n">my_game</span><span class="p">.</span><span class="nf">entries</span><span class="p">.</span><span class="nf">all</span><span class="p">(</span><span class="n">paging_params</span><span class="p">)</span>
-  <span class="c1"># Process entries...</span>
-<span class="k">end</span> <span class="k">while</span> <span class="n">entries</span><span class="p">[</span><span class="s1">'paging'</span><span class="p">][</span><span class="s1">'next_max_id'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">original_max_id</span>
 </code></pre>
+<blockquote>
+<p>example response</p>
+</blockquote>
+<pre class="highlight ruby"><code><span class="p">{</span>
+<span class="s2">"results"</span><span class="p">:</span> <span class="p">[</span>
+  <span class="p">{</span>
+    <span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">"participant_id"</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="s2">"game_id"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="s2">"metadata"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">"country"</span><span class="p">:</span> <span class="s2">"canada"</span><span class="p">,</span>
+      <span class="s2">"state"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+      <span class="s2">"province"</span><span class="p">:</span> <span class="s2">"British Columbia"</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="s2">"id"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s2">"participant_id"</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+    <span class="s2">"game_id"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="s2">"metadata"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">"country"</span><span class="p">:</span> <span class="s2">"canada"</span><span class="p">,</span>
+      <span class="s2">"state"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+      <span class="s2">"province"</span><span class="p">:</span> <span class="s2">"Manitoba"</span>
+    <span class="p">}</span>
+ <span class="p">],</span>
+ <span class="s2">"count"</span><span class="p">:</span> <span class="mi">5</span>
+<span class="p">}</span>
+</code></pre><pre class="highlight json"><code><span class="p">{</span><span class="w">
+</span><span class="s2">"results"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="s2">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"participant_id"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"game_id"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"metadata"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="s2">"country"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canada"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"province"</span><span class="p">:</span><span class="w"> </span><span class="s2">"British Columbia"</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="s2">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"participant_id"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"game_id"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"metadata"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="s2">"country"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canada"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"province"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Manitoba"</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+ </span><span class="p">],</span><span class="w">
+ </span><span class="s2">"count"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<p>The foundations of our paging system are <code class="prettyprint">limit</code> and <code class="prettyprint">offset</code> parameters, with an optional supplementary <code class="prettyprint">sort</code> parameter.</p>
+
 <h3 id="paging-request-parameters">Paging Request Parameters</h3>
 
 <p>All List requests are controlled by three parameters. They can be used together or individually.</p>
@@ -200,26 +218,30 @@ Cursoring was developed to overcome the inefficiencies associated with passing o
 </tr>
 </thead><tbody>
 <tr>
-<td><code class="prettyprint">count</code></td>
+<td><code class="prettyprint">limit</code></td>
 <td>The maximum number of objects to return</td>
 <td>Dependent on Object requested</td>
 </tr>
 <tr>
-<td><code class="prettyprint">max_id</code></td>
-<td>Return Entries created before and including the Entry with this <code class="prettyprint">id</code></td>
+<td><code class="prettyprint">offset</code></td>
+<td>Number of objects to skip past</td>
 <td>nil</td>
 </tr>
 <tr>
-<td><code class="prettyprint">since_id</code></td>
-<td>Return Entries created after the Entry with this <code class="prettyprint">id</code></td>
-<td>nil</td>
+<td><code class="prettyprint">sort</code></td>
+<td>Sorting by <code class="prettyprint">created_at</code></td>
+<td><code class="prettyprint">asc</code> or <code class="prettyprint">desc</code></td>
 </tr>
 </tbody></table>
+
+<p><aside class="notice">
+Ruby Paging Example (right) shows the above usage in Ruby
+</aside></p>
 
 <h3 id="paging-response-parameters">Paging Response Parameters</h3>
 
 <p>The most recently created objects of any given type have the highest <code class="prettyprint">id</code> attributes.
-List responses are made up of a <code class="prettyprint">results</code> array sorted by <code class="prettyprint">id</code> in a descending (high-to-low) manner and a <code class="prettyprint">paging</code> hash.</p>
+By default, list responses are made up of a <code class="prettyprint">results</code> array sorted by <code class="prettyprint">id</code> in a descending (high-to-low).</p>
 
 <table><thead>
 <tr>
@@ -232,44 +254,13 @@ List responses are made up of a <code class="prettyprint">results</code> array s
 <td>Array of objects requested</td>
 </tr>
 <tr>
-<td><code class="prettyprint">paging</code></td>
-<td>Paging hash</td>
+<td><code class="prettyprint">count</code></td>
+<td>Total number of pageable objects</td>
 </tr>
 </tbody></table>
-
-<h3 id="paging-hash-keys">Paging Hash Keys</h3>
-
-<table><thead>
-<tr>
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead><tbody>
-<tr>
-<td><code class="prettyprint">min_id</code></td>
-<td>The lowest <code class="prettyprint">id</code> in the <code class="prettyprint">results</code> array</td>
-</tr>
-<tr>
-<td><code class="prettyprint">max_id</code></td>
-<td>The highest <code class="prettyprint">id</code> in the <code class="prettyprint">results</code> array</td>
-</tr>
-<tr>
-<td><code class="prettyprint">next_max_id</code></td>
-<td>The <code class="prettyprint">next_id</code> to pass to a subsequent paging request</td>
-</tr>
-</tbody></table>
-
-<h3 id="usage">Usage</h3>
-
-<p>For the first request, pass only the <code class="prettyprint">count</code> parameter.</p>
-
-<p>Process the <code class="prettyprint">results</code> array, and record the <code class="prettyprint">paging</code> hash&rsquo;s <code class="prettyprint">max_id</code> for future use.
-If you wish to retrieve the next page, use the <code class="prettyprint">paging</code> hash&rsquo;s <code class="prettyprint">next_max_id</code> as the <code class="prettyprint">max_id</code> for the next request. Repeat as desired.</p>
-
-<p>Once you&rsquo;ve iterated through your pages, you can be sure to only get new content by passing the original <code class="prettyprint">max_id</code> as the <code class="prettyprint">since_id</code> in subsequent requests.</p>
 
 <p><aside class="notice">
-Ruby Paging Example (right) shows the above usage in Ruby
+Example response on the right
 </aside></p>
 
           <h1 id="games">Games</h1>
@@ -814,8 +805,6 @@ What if a User wanted to run a photo contest where instead of a Judging the ulti
 
 <p><strong>Flow</strong> is described in-depth in the <a href="#flow">next section</a>. First, we must define our <strong>Rounds</strong>.</p>
 
-<h3 id="are-we-removing-flow?">Are we removing Flow?</h3>
-
 <h2 id="action-and-timed-rounds">Action and Timed Rounds</h2>
 
 <p>Programatically, there are two groups of Rounds: <strong>Action</strong> and <strong>Timed</strong>.</p>
@@ -826,15 +815,16 @@ What if a User wanted to run a photo contest where instead of a Judging the ulti
 
 <p>Moderation is a good example: when an administrator approves or denies an Entry it is moved to the Round&rsquo;s <code class="prettyprint">pass_round</code> or <code class="prettyprint">fail_round</code> immediately.</p>
 
-<p>There are two Rounds of this type: <code class="prettyprint">submission</code> and <code class="prettyprint">moderation</code>.</p>
+<p>There are two Rounds of this type: <code class="prettyprint">submission</code> and <code class="prettyprint">on_demand</code>.</p>
 
 <h3 id="timed-rounds">Timed Rounds</h3>
 
-<p>Timed Rounds automatically advance their entries at a pre-defined timestamp.</p>
+<p>There are four Rounds of this type: <code class="prettyprint">random_draw</code>, <code class="prettyprint">points</code>, <code class="prettyprint">judging</code>, and <code class="prettyprint">webhook</code>.
+Timed rounds, by default, will automatically advance their entries at their <code class="prettyprint">end_date</code>.</p>
 
-<p>Random Draw is a good example: Once the Round has ended, a pre-defined number of Entries &ldquo;win&rdquo; and advance to the Round&rsquo;s <code class="prettyprint">pass_round</code> at that time. Those that &ldquo;lose&rdquo; are advanced to the Round&rsquo;s <code class="prettyprint">fail_round</code>.</p>
+<p>Judging is a good example: Once the Round has ended, based on submitted judgements during the round a number of entries will advance to the Round&rsquo;s <code class="prettyprint">pass_round</code>. Those that &ldquo;lose&rdquo; are advanced to the Round&rsquo;s <code class="prettyprint">fail_round</code>.</p>
 
-<p>There are four Rounds of this type: <code class="prettyprint">random_draw</code>, <code class="prettyprint">points</code>, <code class="prettyprint">judging</code>, and <code class="prettyprint">webhook</code></p>
+<p>Timed rounds are affected by the <code class="prettyprint">manually_advance</code> boolean parameter. If <code class="prettyprint">manually_advance</code> is set to false, they will not advance unless triggered to do so.</p>
 
 <h2 id="global-attributes">Global Attributes</h2>
 
@@ -869,6 +859,11 @@ What if a User wanted to run a photo contest where instead of a Judging the ulti
 <td>UNIX timestamp</td>
 <td>The Round&rsquo;s end date</td>
 </tr>
+<tr>
+<td><code class="prettyprint">manually_advance</code></td>
+<td>boolean</td>
+<td>Whether a timed round automatically advanced at its <code class="prettyprint">end_date</code> or requires a manual trigger</td>
+</tr>
 </tbody></table>
 
 <h2 id="round-types-and-their-rules">Round Types and their Rules</h2>
@@ -880,7 +875,7 @@ What if a User wanted to run a photo contest where instead of a Judging the ulti
 <p>If a Game had a front door, it would be a Submission Round.
 Rounds of this type define the rules for how often and how frequently a Participant can play a Game.</p>
 
-<h3 id="submission-rules">Submission Rules</h3>
+<h4 id="submission-rules">Submission Rules</h4>
 
 <table><thead>
 <tr>
@@ -915,17 +910,29 @@ Rounds of this type define the rules for how often and how frequently a Particip
 <p>String identifier: <code class="prettyprint">moderation</code></p>
 
 <p>Moderation Rounds are used to quickly eliminate any inappropriate or off-topic content.
-They can be used between two Rounds of any type, and are very useful for monitoring the overall progress of a Game.</p>
+They can be used between two Rounds of any type.</p>
 
-<p>If there are Entries awaiting moderation, this Round POSTs status reports to the <code class="prettyprint">status_webhook</code> a maximum of two times per day.
-If you do not wish to receive these reports, do not provide a <code class="prettyprint">status_webhook</code>.</p>
+<p>The <code class="prettyprint">manually_advance</code> parameter is particularly important for Moderation Rounds.</p>
 
-<p>Make sure to give a realistic buffer period for Moderation.
-If the Round ends and there are still Entries in Moderation, they will be advanced to the <code class="prettyprint">fail_round</code> defined in the Game Flow.</p>
+<table><thead>
+<tr>
+<th><code class="prettyprint">manually_advance</code></th>
+<th>Effect at Moderation Round&rsquo;s <code class="prettyprint">end_date</code></th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">false</code> or <code class="prettyprint">nil</code> (default)</td>
+<td>Any Entries currently in the Moderation Round will advance to its <code class="prettyprint">fail_round</code></td>
+</tr>
+<tr>
+<td><code class="prettyprint">true</code></td>
+<td>Any Entries currently in the Moderation Round will remain in the Moderation Round</td>
+</tr>
+</tbody></table>
 
 <p>Moderation is performed by Participants with the <code class="prettyprint">moderate</code> permission. Visit <a href="#get-entries-in-moderation">Moderation</a> to learn more.</p>
 
-<h3 id="moderation-rules">Moderation Rules</h3>
+<h4 id="moderation-rules">Moderation Rules</h4>
 
 <table><thead>
 <tr>
@@ -934,19 +941,16 @@ If the Round ends and there are still Entries in Moderation, they will be advanc
 <th>Description</th>
 </tr>
 </thead><tbody>
-<tr>
-<td>status_webhook</td>
-<td>string</td>
-<td>POST status reports to this URL - ie. <em>Entries awaiting moderation</em> (optional)</td>
-</tr>
 </tbody></table>
+
+<p><em>This Round Type has no rules</em></p>
 
 <h3 id="points">Points</h3>
 
 <p>String identifier: <code class="prettyprint">points</code></p>
 
 <p>There are many manifestations of Points across the internet.
-Examples include: &ldquo;Votes&rdquo;, &ldquo;Likes&rdquo;, &ldquo;Re-Tweets&rdquo;, &ldquo;Subscribes&rdquo;, &ldquo;Diggs&rdquo;, and many more.</p>
+Examples include: &ldquo;Votes&rdquo;, &ldquo;Likes&rdquo;, &ldquo;Re-Tweets&rdquo;, &ldquo;Subscribes&rdquo;, and many more.</p>
 
 <p>At the end of the day, each of the above is just a way of keeping score.
 To further our generalized <em>Game</em> analogy, we opted to use <em>Points</em> as our descriptor.</p>
@@ -954,7 +958,7 @@ To further our generalized <em>Game</em> analogy, we opted to use <em>Points</em
 <p>Points Rounds define the number of Points (postive or negative) a Participant can assign per Entry during a pre-defined interval.
 When the interval is completed, Entries are sorted by Points, and a pre-defined number &ldquo;win&rdquo;.</p>
 
-<h3 id="points-rules">Points Rules</h3>
+<h4 id="points-rules">Points Rules</h4>
 
 <table><thead>
 <tr>
@@ -1003,7 +1007,7 @@ This results in <code class="prettyprint">winners</code> also being limited to 2
 
 <p>Visit <a href="#judging">Judging</a> to learn more.</p>
 
-<h3 id="judging-rules">Judging Rules</h3>
+<h4 id="judging-rules">Judging Rules</h4>
 
 <table><thead>
 <tr>
@@ -1031,7 +1035,7 @@ This results in <code class="prettyprint">winners</code> also being limited to 2
 <p>Random Draw Rounds are the bread and butter of Sweepstakes Games, but can really be used Games of any kind.
 Rounds of this type can define either an absolute number of winners or a percentage of total Entries that will &ldquo;win&rdquo; the Round.</p>
 
-<h3 id="random-draw-rules">Random Draw Rules</h3>
+<h4 id="random-draw-rules">Random Draw Rules</h4>
 
 <table><thead>
 <tr>
@@ -1060,7 +1064,9 @@ Rounds of this type can define either an absolute number of winners or a percent
 A pre-defined number of entries are randomly drawn from all entries that have an active (non-nil) state.
 These winners are then passed through the provided On-Demand Round and returned.</p>
 
-<h3 id="on-demand-rules">On Demand Rules</h3>
+<p>Visit <a href="#on-demand-winners">On Demand Winners</a> for more information.</p>
+
+<h4 id="on-demand-rules">On Demand Rules</h4>
 
 <table><thead>
 <tr>
@@ -1073,16 +1079,13 @@ These winners are then passed through the provided On-Demand Round and returned.
 
 <p><em>This Round Type has no rules</em></p>
 
-<h3 id="webhook">Webhook</h3>
+<h3 id="instant-win">Instant Win</h3>
 
-<p>String identifier: <code class="prettyprint">webhook</code></p>
+<p>String identifier <code class="prettyprint">instant_win</code></p>
 
-<p>Webhook Rounds were originally named Prize Fulfillment Rounds, but were later generalized so that they might be used for passing Entries, failing Entries, or even things like mid-Game progress reports.
-When a Webhook Round reaches its end date, it POSTs the data of all its Entries to a pre-defined webhook and advances the Entries to the next Round.</p>
+<p>Instant Win Rounds will immediately advance an Entry to its <code class="prettyprint">pass_round</code> or <code class="prettyprint">fail_round</code> based on odds provided in its rules.</p>
 
-<p>If a webhook POST is unsuccessful (anything other than a 200 response), it can be retried or dismissed at our <a href="http://api.strutta.com">developer portal</a>.</p>
-
-<h3 id="webhook-rules">Webhook Rules</h3>
+<h4 id="instant-win-rules">Instant Win Rules</h4>
 
 <table><thead>
 <tr>
@@ -1092,30 +1095,31 @@ When a Webhook Round reaches its end date, it POSTs the data of all its Entries 
 </tr>
 </thead><tbody>
 <tr>
-<td>webhook</td>
-<td>string</td>
-<td>URI to POST to on Round completion</td>
+<td><code class="prettyprint">max_winners</code></td>
+<td>int</td>
+<td>Max number of winners that can go to pass_round</td>
 </tr>
 <tr>
-<td>notify_user</td>
-<td>boolean</td>
-<td>Whether to email User on Round completion. Default: <code class="prettyprint">false</code>.</td>
+<td><code class="prettyprint">max_entries</code></td>
+<td>int</td>
+<td>Max number of times a participant can enter. If entry number &gt; max_entries number, entry is pushed to fail_round</td>
+</tr>
+<tr>
+<td><code class="prettyprint">odds</code></td>
+<td>int</td>
+<td>Chance of winning, 1 in (odds).</td>
 </tr>
 </tbody></table>
 
-<h2 id="referrals">Referrals</h2>
+<h3 id="webhook">Webhook</h3>
 
-<p>You may want to run a Sweepstakes in which Participants get bonus Entries for referring others to the Game.
-To allow this, we have implemented Referrals.</p>
+<p>String identifier: <code class="prettyprint">webhook</code></p>
 
-<p>To include this feature in your Game, there are two requirements.</p>
+<p>&ldquo;Webhook&rdquo; rounds have undergone a number of transformations as we have come to understand our users&#39; needs.
+At this point in time they essentially act as &ldquo;holding&rdquo; rounds.</p>
 
-<p>First, when creating a Submission Round, you must include a <code class="prettyprint">num_referrals</code> parameter in the Round definition with a value of how many extra Entries you want to allow Participants during the given interval.</p>
-
-<p>When you create a Participant, if you have <code class="prettyprint">administrate</code> permissions, a <code class="prettyprint">referral_code</code> will be returned with that Participant.
-Then, to tell the API that an Entry is a referral of that Participant, you must include this code in the <code class="prettyprint">referral</code> parameter of the Entry.
-If the number of that Participant&rsquo;s bonus Entries do not exceed the <code class="prettyprint">num_referrals</code> value of the Round, this will automatically create a bonus Entry for the Participant.
-The bonus Entry&rsquo;s <code class="prettyprint">metadata</code> value will be <code class="prettyprint">{email: participant_email, referral: true}</code>, where <code class="prettyprint">participant_email</code> is the original Participant&rsquo;s email address.</p>
+<p>By default, at a &ldquo;Webhook&rdquo; Round&rsquo;s <code class="prettyprint">end_date</code>, all entries will advance to the Round&rsquo;s <code class="prettyprint">pass_round</code>.
+However, if you turn on the <code class="prettyprint">manually_advance</code> parameter to <code class="prettyprint">true</code>, they will remain in the round even after the <code class="prettyprint">end_date</code>.</p>
 
 <h2 id="create-a-round">Create a Round</h2>
 
@@ -1229,6 +1233,11 @@ The bonus Entry&rsquo;s <code class="prettyprint">metadata</code> value will be 
 <td><code class="prettyprint">rules</code></td>
 <td>Type-specific rules. See <a href="#round-types-and-their-rules">Round Types and their Rules</a>.</td>
 <td></td>
+</tr>
+<tr>
+<td><code class="prettyprint">manually_advance</code></td>
+<td>boolean</td>
+<td>Whether a timed round automatically advanced at its end_date or requires a manual trigger</td>
 </tr>
 </tbody></table>
 
@@ -3174,10 +3183,10 @@ Entries have Public READ permissions, but only the Entry owner, Administrators a
     <span class="ss">title: </span><span class="s1">'My House'</span><span class="p">,</span>
     <span class="ss">description: </span><span class="s1">'This is a picture of my house'</span>
   <span class="p">},</span>
-  <span class="ss">media: </span><span class="p">{</span>
+  <span class="ss">media: </span><span class="p">[{</span>
     <span class="ss">link: </span><span class="s1">'http://placehold.it/350x150'</span><span class="p">,</span>
     <span class="ss">type: </span><span class="s1">'image'</span>
-  <span class="p">}</span>
+  <span class="p">}]</span>
 <span class="p">}</span>
 <span class="n">strutta</span><span class="p">.</span><span class="nf">games</span><span class="p">(</span><span class="mi">333</span><span class="p">).</span><span class="nf">entries</span><span class="p">.</span><span class="nf">create</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
 </code></pre><pre class="highlight json"><code><span class="p">{</span><span class="w">
@@ -3296,6 +3305,40 @@ when the Game has 1 or more active Submission rounds.</p>
 <td>If creating an Entry on behalf of another Participant</td>
 </tr>
 </tbody></table>
+
+<h2 id="create-a-participant-and-entry">Create a Participant and Entry</h2>
+
+<p><code class="prettyprint">POST v2/games/:id/enter</code></p>
+
+<p>This is the consolidated endpoint for creating an entry without first needing to create a participant.</p>
+
+<h3 id="parameters">Parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">token</code></td>
+<td>the API key, required</td>
+</tr>
+<tr>
+<td><code class="prettyprint">email</code></td>
+<td>An email used to identify the participant. Required, unless an identifier is passed</td>
+</tr>
+<tr>
+<td><code class="prettyprint">identifier</code></td>
+<td>An alphanumeric string used to identify the participant. Required, unless an email is passed</td>
+</tr>
+<tr>
+<td><code class="prettyprint">metatdata</code></td>
+<td>Optional json to include with the entry</td>
+</tr>
+</tbody></table>
+
+<p>The API will only accept an email or identifier, not both. In the case that the participant has reached the submission limit, the API will return the status of 422 unprocessable entity as well as the last valid entry from the participant.</p>
 
 <h2 id="get-all-entries">Get All Entries</h2>
 
@@ -3733,13 +3776,6 @@ Be sure to use the <code class="prettyprint">rank</code> attribute as opposed to
 <td>1-20 (optional - defaults to 20)</td>
 </tr>
 </tbody></table>
-
-<h3 id="paging">Paging</h3>
-
-<p>Paging in Leaderboard is similar to <a href="#paging">paging in List endpoints</a>.
-Just swap <code class="prettyprint">next_top_rank</code> for <code class="prettyprint">next_max_id</code>.
-Beware that ranks can change very quickly, so there is no completely reliable way to page through a Leaderboard.
-It is recommended to use the <a href="#export-api">Export API</a> if you ever need a full export of Points.</p>
 
 <h3 id="minimum-permission">Minimum Permission</h3>
 
@@ -5659,445 +5695,6 @@ The Judging response is pretty intricate, so we&rsquo;ve broken it down into a h
 <tr>
 <td>503</td>
 <td>Service Unavailable &ndash; We&rsquo;re temporarially offline for maintenance. Please try again later.</td>
-</tr>
-</tbody></table>
-
-          <h1 id="export-api">Export API</h1>
-
-<h2 id="background">Background</h2>
-
-<p>The Export API was built to give access to the large datasets associated with Strutta Games - namely <strong>Participants</strong>, <strong>Entries</strong>, and <strong>Points</strong> - that would be cumbersome or slow to retrieve with the Strutta API.
-It is designed to demand as little memory as possible, on both the client and the server.</p>
-
-<p>There is no paging or filtering in the Export API. When you request make a request for Participants, Entries, or Points, you get <em>everything</em>.</p>
-
-<h2 id="technical">Technical</h2>
-
-<p><strong>Generic endpoint format:</strong></p>
-
-<p><code class="prettyprint">https://api.strutta.com/export/&lt;object&gt;</code></p>
-
-<p><strong>Input</strong></p>
-
-<p>All Export API endpoints expect GET requests with normal HTTP parameters.</p>
-
-<p><strong>Output</strong></p>
-
-<p>Output data is streamed as JSON strings separated by newline characters( <code class="prettyprint">\n</code> ).
-This might seem strange at first, but makes a lot of sense when the use case is considered.</p>
-
-<p>Instead of loading the entire dataset into memory on the server (which could likely exceed memory limits, ultimately destroying the request) and transmitting the entire object as a single response (which could easily timeout partway through, resulting in invalid JSON), each JSON object can be processed as it arrives, then removed from memory.</p>
-
-<h2 id="authentication">Authentication</h2>
-
-<p>The Export API can be accessed using User Private tokens of tokens belonging to Participants with the <code class="prettyprint">administrate</code> permission.
-Since all Export API requests are GET requests, only tokens passed as HTTP request parameters will be accepted. Example:</p>
-
-<p><code class="prettyprint">https://api.strutta.com/export/&lt;object&gt;/?token=mystruttatoken</code></p>
-
-<p><a href="#authentication">Read more about the Strutta Authentication</a></p>
-
-<h2 id="errors">Errors</h2>
-
-<p>Unfortunately, because all Export API responses are streamed, Errors cannot use typical HTTP response codes.
-Instead, errors are returned one-per-line in the form:</p>
-
-<p>Raw:
-<code class="prettyprint">&quot;{\&quot;error\&quot;:\&quot;error message\&quot;}\n&quot;</code></p>
-
-<p>Parsed:
-<code class="prettyprint">{&quot;error&quot;:&quot;error message&quot;}</code></p>
-
-<p>You can safely assume that if errors are streamed, no data will follow.</p>
-
-<h2 id="version">Version</h2>
-
-<p>This documentation is for Export API version 1.0</p>
-
-<h2 id="export-participants">Export Participants</h2>
-
-<blockquote>
-<p>https://api.strutta.com/export/participants/?game_id=3344&amp;token=mystruttatoken</p>
-</blockquote>
-<pre class="highlight plaintext"><code>NOTE: Spacing between objects is added only for Readability
-
-"
-
-{\"id\":\"3333\",\"email\":\"ellen.grady@aol.com\",\"metadata\":{\"details\":\"User Details\"},\"game_id\":\"3344\",\"created_at\":\"2014-11-07 09:17:26.046529\"}\n
-
-{\"id\":\"2222\",\"email\":\"cara.nguyen@google.co.uk\",\"metadata\":{\"details\":\"User Details\"},\"game_id\":\"3344\",\"created_at\":\"2014-11-07 09:17:26.026228\"}\n
-
-{\"id\":\"1111\",\"email\":\"chris.kambere@yahoo.com\",\"metadata\":{\"details\":\"User Details\"},\"game_id\":\"3344\",\"created_at\":\"2014-11-07 09:17:25.968242\"}\n
-
-"
-
-</code></pre>
-<h3 id="http-request">HTTP Request</h3>
-
-<p><code class="prettyprint">GET https://api.strutta.com/export/participants</code></p>
-
-<h3 id="request-parameters">Request Parameters</h3>
-
-<table><thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-</tr>
-</thead><tbody>
-<tr>
-<td><code class="prettyprint">game_id</code></td>
-<td>The ID of the parent Game</td>
-</tr>
-</tbody></table>
-
-<h3 id="json-string-response-parameters">JSON String Response Parameters</h3>
-
-<table><thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-</tr>
-</thead><tbody>
-<tr>
-<td><code class="prettyprint">id</code></td>
-<td>The Participant ID</td>
-</tr>
-<tr>
-<td><code class="prettyprint">email</code></td>
-<td>The Participant&rsquo;s email</td>
-</tr>
-<tr>
-<td><code class="prettyprint">metadata</code></td>
-<td>Metadata associated with the Participant</td>
-</tr>
-<tr>
-<td><code class="prettyprint">game_id</code></td>
-<td>ID of the parent Game</td>
-</tr>
-<tr>
-<td><code class="prettyprint">created_at</code></td>
-<td>The creation timestamp (ISO 8601 format)</td>
-</tr>
-</tbody></table>
-
-<h3 id="minimum-permission">Minimum Permission</h3>
-
-<table><thead>
-<tr>
-<th>Consumer</th>
-<th>Permission</th>
-</tr>
-</thead><tbody>
-<tr>
-<td>User</td>
-<td><code class="prettyprint">private_token</code></td>
-</tr>
-<tr>
-<td>Participant</td>
-<td><code class="prettyprint">administrate</code></td>
-</tr>
-</tbody></table>
-
-<h2 id="export-entries">Export Entries</h2>
-
-<blockquote>
-<p>https://api.strutta.com/export/entries/?game_id=3344&amp;token=mystruttatoken</p>
-</blockquote>
-<pre class="highlight plaintext"><code>NOTE: Spacing between objects is added only for Readability
-
-"
-
-{\"id\":\"1\",\"game_id\":\"3344\",\"metadata\":{\"email\":\"joe.carter@bluejays.com\",\"first_name\":\"Joe\",\"last_name\":\"Carter\"},\"created_at\":\"2014-11-07 09:31:53.651251\",\"state\":\"71\",\"participant_id\":\"1232\"}\n
-
-{\"id\":\"2\",\"game_id\":\"3344\",\"metadata\":{\"email\":\"mike.bibby@grizzlies.com\",\"first_name\":\"Mike\",\"last_name\":\"Bibby\"},\"created_at\":\"2014-11-07 09:31:53.664817\",\"state\":\"56\",\"participant_id\":\"1323\"}\n
-
-{\"id\":\"3\",\"game_id\":\"3344\",\"metadata\":{\"email\":\"gino.odjick@canucks.com\",\"first_name\":\"Gino\",\"last_name\":\"Odjick\"},\"created_at\":\"2014-11-07 09:31:53.676233\",\"state\":\"99\",\"participant_id\":\"1333\"}\n
-
-
-"
-
-</code></pre>
-<h3 id="http-request">HTTP Request</h3>
-
-<p><code class="prettyprint">GET https://api.strutta.com/export/entries</code></p>
-
-<h3 id="request-parameters">Request Parameters</h3>
-
-<table><thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-</tr>
-</thead><tbody>
-<tr>
-<td><code class="prettyprint">game_id</code></td>
-<td>The ID of the parent Game</td>
-</tr>
-</tbody></table>
-
-<h3 id="json-string-response-parameters">JSON String Response Parameters</h3>
-
-<table><thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-</tr>
-</thead><tbody>
-<tr>
-<td><code class="prettyprint">id</code></td>
-<td>The Entry ID</td>
-</tr>
-<tr>
-<td><code class="prettyprint">game_id</code></td>
-<td>ID of the parent Game</td>
-</tr>
-<tr>
-<td><code class="prettyprint">metadata</code></td>
-<td>Metadata associated with the Entry</td>
-</tr>
-<tr>
-<td><code class="prettyprint">created_at</code></td>
-<td>The creation timestamp (ISO 8601 format)</td>
-</tr>
-<tr>
-<td><code class="prettyprint">state</code></td>
-<td>The current <code class="prettyprint">state</code> of the Entry</td>
-</tr>
-<tr>
-<td><code class="prettyprint">participant_id</code></td>
-<td>The ID of the Entry&rsquo;s owner.</td>
-</tr>
-</tbody></table>
-
-<h3 id="minimum-permission">Minimum Permission</h3>
-
-<table><thead>
-<tr>
-<th>Consumer</th>
-<th>Permission</th>
-</tr>
-</thead><tbody>
-<tr>
-<td>User</td>
-<td><code class="prettyprint">private_token</code></td>
-</tr>
-<tr>
-<td>Participant</td>
-<td><code class="prettyprint">administrate</code></td>
-</tr>
-</tbody></table>
-
-<h2 id="export-points">Export Points</h2>
-
-<blockquote>
-<p>https://api.strutta.com/export/entries/?round_id=2222&amp;game_id=3344&amp;token=mystruttatoken</p>
-</blockquote>
-<pre class="highlight plaintext"><code>NOTE: Spacing between objects is added only for Readability
-
-"
-
-{\"id\":\"3\",\"entry_id\":\"333\",\"round_id\":\"2222\",\"weight\":\"1\",\"ip_address\":"84.92.256.65",\"created_at\":\"2014-11-07 09:41:34.061395\",\"participant_id\":\"444\"}\n
-
-{\"id\":\"2\",\"entry_id\":\"222\",\"round_id\":\"2222\",\"weight\":\"5\",\"ip_address\":"84.92.256.65",\"created_at\":\"2014-11-07 09:41:34.058693\",\"participant_id\":\"656\"}\n
-
-{\"id\":\"1\",\"entry_id\":\"777\",\"round_id\":\"2222\",\"weight\":\"3\",\"ip_address\":"84.92.256.65",\"created_at\":\"2014-11-07 09:41:34.053759\",\"participant_id\":\"876\"}\n
-
-"
-
-</code></pre>
-<h3 id="http-request">HTTP Request</h3>
-
-<p><code class="prettyprint">GET https://api.strutta.com/export/entries</code></p>
-
-<h3 id="request-parameters">Request Parameters</h3>
-
-<table><thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-</tr>
-</thead><tbody>
-<tr>
-<td><code class="prettyprint">game_id</code></td>
-<td>The ID of the parent Game</td>
-</tr>
-<tr>
-<td><code class="prettyprint">round_id</code></td>
-<td>The ID of the parent Points Round</td>
-</tr>
-</tbody></table>
-
-<h3 id="json-string-response-parameters">JSON String Response Parameters</h3>
-
-<table><thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-</tr>
-</thead><tbody>
-<tr>
-<td><code class="prettyprint">id</code></td>
-<td>The Entry ID</td>
-</tr>
-<tr>
-<td><code class="prettyprint">entry_id</code></td>
-<td>ID of the parent Entry</td>
-</tr>
-<tr>
-<td><code class="prettyprint">round_id</code></td>
-<td>ID of the parent Points Round</td>
-</tr>
-<tr>
-<td><code class="prettyprint">weight</code></td>
-<td>The weight associated with the Point</td>
-</tr>
-<tr>
-<td><code class="prettyprint">ip_address</code></td>
-<td>The IP address of the Participant who created the Point</td>
-</tr>
-<tr>
-<td><code class="prettyprint">created_at</code></td>
-<td>The creation timestamp (ISO 8601 format)</td>
-</tr>
-<tr>
-<td><code class="prettyprint">participant_id</code></td>
-<td>The ID of the Point&rsquo;s owner.</td>
-</tr>
-</tbody></table>
-
-<h3 id="minimum-permission">Minimum Permission</h3>
-
-<table><thead>
-<tr>
-<th>Consumer</th>
-<th>Permission</th>
-</tr>
-</thead><tbody>
-<tr>
-<td>User</td>
-<td><code class="prettyprint">private_token</code></td>
-</tr>
-<tr>
-<td>Participant</td>
-<td><code class="prettyprint">administrate</code></td>
-</tr>
-</tbody></table>
-
-<h2 id="export-api-calls">Export API Calls</h2>
-
-<blockquote>
-<p>https://api.strutta.com/export/entries/?game_id=3344&amp;token=mystruttatoken</p>
-</blockquote>
-<pre class="highlight plaintext"><code>NOTE: Spacing between objects is added only for Readability
-
-"
-
-{\"id\":\"10\",\"user_id\":\"222\",\"request_method\":\"POST\",\"path\":\"/v1/games\",\"response_code\":\"200\",\"created_at\":\"2014-11-13 13:29:01.825946\",\"game_id\":\"132\",\"round_id\":null,\"entry_id\":null,\"point_id\":null,\"request_params\":null,\"participant_caller_id\":2554,\"participant_id\":null}
-
-{\"id\":\"9\",\"user_id\":\"222\",\"request_method\":\"POST\",\"path\":\"/v1/games\",\"response_code\":\"422\",\"created_at\":\"2014-11-13 13:29:01.823424\",\"game_id\":\"132\",\"round_id\":null,\"entry_id\":null,\"point_id\":null,\"request_params\":null,\"participant_caller_id\":5443,\"participant_id\":null}
-
-"
-
-</code></pre>
-<p><aside class="notice">
-Api Calls are scoped to a specific <code class="prettyprint">game_id</code>
-</aside></p>
-
-<h3 id="http-request">HTTP Request</h3>
-
-<p><code class="prettyprint">GET https://api.strutta.com/export/api-calls</code></p>
-
-<h3 id="request-parameters">Request Parameters</h3>
-
-<table><thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-</tr>
-</thead><tbody>
-<tr>
-<td><code class="prettyprint">game_id</code></td>
-<td>The ID of the parent Game</td>
-</tr>
-</tbody></table>
-
-<h3 id="json-string-response-parameters">JSON String Response Parameters</h3>
-
-<table><thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-</tr>
-</thead><tbody>
-<tr>
-<td><code class="prettyprint">id</code></td>
-<td>The Api Call ID</td>
-</tr>
-<tr>
-<td><code class="prettyprint">user_id</code></td>
-<td>ID of the parent User</td>
-</tr>
-<tr>
-<td><code class="prettyprint">participant_caller_id</code></td>
-<td>If the API call was made by a Participant, their ID</td>
-</tr>
-<tr>
-<td><code class="prettyprint">game_id</code></td>
-<td>ID of the parent Game</td>
-</tr>
-<tr>
-<td><code class="prettyprint">participant_id</code></td>
-<td>If API call affected a Participant, their <code class="prettyprint">id</code></td>
-</tr>
-<tr>
-<td><code class="prettyprint">round_id</code></td>
-<td>If API call affected a Round, its <code class="prettyprint">id</code></td>
-</tr>
-<tr>
-<td><code class="prettyprint">entry_id</code></td>
-<td>If API call affected an Entry, its <code class="prettyprint">id</code></td>
-</tr>
-<tr>
-<td><code class="prettyprint">point_id</code></td>
-<td>If API call affected a Point, its <code class="prettyprint">id</code></td>
-</tr>
-<tr>
-<td><code class="prettyprint">request_method</code></td>
-<td>The HTTP request method</td>
-</tr>
-<tr>
-<td><code class="prettyprint">response code</code></td>
-<td>The HTTP response code</td>
-</tr>
-<tr>
-<td><code class="prettyprint">uri</code></td>
-<td>The uri requested</td>
-</tr>
-<tr>
-<td><code class="prettyprint">request_params</code></td>
-<td>The call&rsquo;s request parameters</td>
-</tr>
-<tr>
-<td><code class="prettyprint">created_at</code></td>
-<td>The creation timestamp (ISO 8601 format)</td>
-</tr>
-</tbody></table>
-
-<h3 id="minimum-permission">Minimum Permission</h3>
-
-<table><thead>
-<tr>
-<th>Consumer</th>
-<th>Permission</th>
-</tr>
-</thead><tbody>
-<tr>
-<td>User</td>
-<td><code class="prettyprint">private_token</code></td>
-</tr>
-<tr>
-<td>Participant</td>
-<td><code class="prettyprint">administrate</code></td>
 </tr>
 </tbody></table>
 
