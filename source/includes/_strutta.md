@@ -2,6 +2,8 @@
 
 ## Background
 
+Test deploying via the script
+
 The Strutta API allows you to tap into the core of Strutta's promotions platform and take advantage of advanced complexity and customization.
 
 In our years of experience creating thousands of turnkey and custom promotions, we've seen the Social Promotions market mature. Our customers have begun to want more than just _Sweepstakes_ or _Contests_; they now want to be able to pick and choose which aspects of each type they want to utilize, and they want to add new elements as well.
